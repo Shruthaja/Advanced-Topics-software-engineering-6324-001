@@ -21,10 +21,8 @@ Of this, on examining for example the first line itself we can see that the func
 
 True positive :
 
-To that end, we checked with a test contract where the function is not being used :
-
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.9;
 
 contract ExampleContract {
     address public owner;
@@ -33,22 +31,39 @@ contract ExampleContract {
         owner = msg.sender;
     }
 
-    function setOwner(address _newOwner) internal {
+    function set(address _newOwner) internal {
         owner = _newOwner;
-        // return owner;
+       
     }
 
-    function getOwner() public view returns (address) {
+    function get() public view returns (address) {
         return owner;
     }
 }
+// This is an example of where the dead-code detector is indeed working fine. 
+// This is also an internal function however unlike in the other contracts it is truly never used.
 
-// contract Contract{
-//     function dead_code() internal() {}
-// }
+// Internal library
+library L {
+    function add(uint a, uint b) internal pure returns (uint) {
+        return a + b;
+    }
+}
 
-To which we got the following output :
+contract testforpositive {
+    function test(uint x, uint y) public view returns (uint) {
+        // Call the internal library function
+        return L.add(x, y);
+    }
+}
+
+
+// This is an example of where the dead-code detector is indeed working fine. 
+// This is also an internal function which is used. The detector is reporting this correctly.
+
+
+output : 
 
 INFO:Detectors:
-ExampleContract.setOwner(address) (examples/flat/test.sol#11-14) is never used and should be removed
+ExampleContract.set(address) (tbtc-v2/solidity/contracts/test.sol#11-14) is never used and should be removed
 Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
