@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.18;
+
+//1
 
 contract ExampleContract {
     address public owner;
+    uint public data;
     
     constructor() {
         owner = msg.sender;
@@ -16,24 +19,34 @@ contract ExampleContract {
     function get() public view returns (address) {
         return owner;
     }
-}
-// This is an example of where the dead-code detector is indeed working fine. 
-// This is also an internal function however unlike in the other contracts it is truly never used.
-
-// Internal library
-library L {
-    function add(uint a, uint b) internal pure returns (uint) {
-        return a + b;
-    }
-}
-
-contract testforpositive {
-    function test(uint x, uint y) public view returns (uint) {
-        // Call the internal library function
-        return L.add(x, y);
+     function anotherUnusedFunction() public {
+        // This function is also never called
+        data = 0;
     }
 }
 
 
-// This is an example of where the dead-code detector is indeed working fine. 
-// This is also an internal function which is used. The detector is reporting this correctly.
+//2
+
+contract SimpleContract {
+    uint public data;
+
+    constructor() {
+        data = 42;
+    }
+
+    function updateData(uint _value) public {
+        // This is live code
+        data = _value;
+    }
+
+    function unusedFunction() internal {
+        // This function is never called
+        data = 0;
+    }
+
+    function anotherUnusedFunction() private {
+        // This function is also never called
+        data = 0;
+    }
+}
