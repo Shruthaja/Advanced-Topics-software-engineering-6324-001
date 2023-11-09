@@ -134,7 +134,7 @@ contract SimpleContract {
 
 Code snippet containg the change in dead-code.py :
 
-/*
+
  for function in sorted(self.compilation_unit.functions, key=lambda x: x.canonical_name):
             if (
                 function.visibility in ["public", "external","internal"]
@@ -159,4 +159,4 @@ Code snippet containg the change in dead-code.py :
              print("No unused functions detected by dead-code detector")
         return results
 
-    */
+    
