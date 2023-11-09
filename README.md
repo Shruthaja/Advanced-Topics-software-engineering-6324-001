@@ -67,3 +67,96 @@ output :
 INFO:Detectors:
 ExampleContract.set(address) (tbtc-v2/solidity/contracts/test.sol#11-14) is never used and should be removed
 Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+************************************************************************************************************************************************************************************************************************************************************************
+11/06/2023:
+************************************************************************************************************************************************************************************************************************************************************************
+
+After taking further look at the issue we were able to find that the internal functions were being flagged by the dead-code detector at the contract they were being defined in. After adding internal functions to the defer list on the detector the unneccesary flags are no longer appearing.
+
+The internal functions can always be imported later on and static analysis has no way of knowing if they will be reused again. Private functions however atleast need to be used in the contract they are defined in :
+
+example -
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
+
+//1
+
+contract ExampleContract {
+    address public owner;
+    uint public data;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function set(address _newOwner) internal {
+        owner = _newOwner;
+       
+    }
+
+    function get() public view returns (address) {
+        return owner;
+    }
+     function anotherUnusedFunction() public {
+        // This function is also never called
+        data = 0;
+    }
+}
+
+
+//2
+
+contract SimpleContract {
+    uint public data;
+
+    constructor() {
+        data = 42;
+    }
+
+    function updateData(uint _value) public {
+        // This is live code
+        data = _value;
+    }
+
+    function unusedFunction() internal {
+        // This function is never called
+        data = 0;
+    }
+
+    function anotherUnusedFunction() private {
+        // This function is also never called
+        data = 0;
+    }
+}
+
+
+Code snippet containg the change in dead-code.py :
+
+/*
+ for function in sorted(self.compilation_unit.functions, key=lambda x: x.canonical_name):
+            if (
+                function.visibility in ["public", "external","internal"]
+                or function.is_constructor
+                or function.is_fallback
+                or function.is_constructor_variables
+            ):
+                continue
+            if function.canonical_name in functions_used:
+                continue
+            if isinstance(function, FunctionContract) and (
+                function.contract_declarer.is_from_dependency()
+            ):
+                continue
+            # Continue if the functon is not implemented because it means the contract is abstract
+            if not function.is_implemented:
+                continue
+            info: DETECTOR_INFO = [function, " is never used and should be removed\n"]
+            res = self.generate_result(info)
+            results.append(res)
+        if(len(results)==0):
+             print("No unused functions detected by dead-code detector")
+        return results
+
+    */
