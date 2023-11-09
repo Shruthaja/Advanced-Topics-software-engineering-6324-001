@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-//1
+//1 example without any private functions but does contain public and internal functions -
 
 contract ExampleContract {
     address public owner;
@@ -26,7 +26,7 @@ contract ExampleContract {
 }
 
 
-//2
+//2 example with private functions -
 
 contract SimpleContract {
     uint public data;
