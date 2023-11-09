@@ -105,6 +105,9 @@ contract ExampleContract {
     }
 }
 
+output : 
+6324-001' running
+No unused functions detected by dead-code detector
 
 //2
 
@@ -130,6 +133,11 @@ contract SimpleContract {
         data = 0;
     }
 }
+
+output :
+INFO:Detectors:
+SimpleContract.anotherUnusedFunction() (test.sol#48-51) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
 
 
 Code snippet containg the change in dead-code.py :
