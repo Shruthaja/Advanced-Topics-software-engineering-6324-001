@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "latest-version": "^7.0.0",
+    "solc": "^0.8.21"
+  }
+}
