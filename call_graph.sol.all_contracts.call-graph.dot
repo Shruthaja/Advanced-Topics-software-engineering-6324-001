@@ -1,0 +1,10 @@
+strict digraph {
+subgraph cluster_18_ContractA {
+label = "ContractA"
+"18_functionB_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" [label="functionB()"]
+"18_functionA_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" [label="functionA()"]
+"18_functionB_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" -> "18_functionA_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}subgraph cluster_solidity {
+label = "[Solidity]"
+}
+}
