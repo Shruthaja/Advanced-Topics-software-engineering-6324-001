@@ -1,6 +1,21 @@
 # Advanced-software-engineering--6324-001
 
-This project is concerned with the enhancement of the slither tool . As of this moment we are working on the [Bug] 1265 : Slither incorrectly reports internal library function as unused #1265 (https://github.com/crytic/slither/issues/1265).
+This project is concerned with the enhancement of the slither tool . As of this moment we are working on the [Bugs] 
+1265 : Slither incorrectly reports internal library function as unused #1265 (https://github.com/crytic/slither/issues/1265).
+664: The feature (print call-graph) of Slither cannot correctly distinguish functions with the same name (i.e., overload) in a contract https://github.com/crytic/slither/issues/664
+
+To run the custom call_graph.py and dead_code.py :
+1. Place the files in ~/.local/lib/python3.10/site-packages/slither/printers/call/call_graph.py for call-graph and Place for dead-code as follows -> ~/.local/lib/python3.10/site-packages/slither/detectors/functions/dead_code.py
+2. once they are placed the custom file and their logic will take over for analysing the certificates.
+3. To run dead-code detector : slither contract.sol --dead-code
+4. To run call-graph printer : slither contract.sol --print call-graph
+   dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png //run the dot command on the dot file generated to get the graph as a png.
+
+Bug fix overview:
+
+=================== 
+Bug 1265:
+===================
 
 On further inspection of the bug it is evident that the dead-code detector is falsely adding internal function calls that are being used later on in its report. This porject hopes to understand what the issue is and come up with a better logic to filter out the truly unused function calls.
 
@@ -166,5 +181,154 @@ Code snippet containg the change in dead-code.py :
         if(len(results)==0):
              print("No unused functions detected by dead-code detector")
         return results
+===============================
+Bug 664:
+===============================
+Initially the printer was ubnable to differentiate between overloaded functions and so we made changes to the _def_process and _function_node functions where we created id's for the functions using a combination of their names and paramters. 
 
-    
+# return unique id for contract function to use as node name
+def _function_node(contract: Contract, function: Union[Function, Variable]) -> str:
+    parameters_hash = hashlib.sha256("_".join(param.name for param in function.parameters).encode()).hexdigest()
+    return f"{contract.id}_{function.name}_{parameters_hash}"
+
+
+    def _process_function(
+    contract: Contract,
+    function: FunctionContract,
+    contract_functions: Dict[Contract, Set[str]],
+    contract_calls: Dict[Contract, Set[str]],
+    solidity_functions: Set[str],
+    solidity_calls: Set[str],
+    external_calls: Set[str],
+    all_contracts: Set[Contract],
+) -> None:
+    # Extract function parameters
+    parameters = [param.name for param in function.parameters]
+
+    # Add the node with function name and parameters
+    function_identifier = f"{function.name}({', '.join(parameters)})"
+    node = _node(_function_node(contract, function), function_identifier)
+    contract_functions[contract].add(node)
+
+    for internal_call in function.internal_calls:
+        _process_internal_call(
+            contract,
+            function,
+            internal_call,
+            contract_calls,
+            solidity_functions,
+            solidity_calls,
+        )
+    for external_call in function.high_level_calls:
+        _process_external_call(
+            contract,
+            function,
+            external_call,
+            contract_functions,
+            external_calls,
+            all_contracts,
+        )
+
+
+def _process_functions(functions: Sequence[Function]) -> str:
+    # TODO  add support for top level function
+
+    contract_functions: Dict[Contract, Set[str]] = defaultdict(
+        set
+    )  # contract -> contract functions nodes
+    contract_calls: Dict[Contract, Set[str]] = defaultdict(set)  # contract -> contract calls edges
+
+    solidity_functions: Set[str] = set()  # solidity function nodes
+    solidity_calls: Set[str] = set()  # solidity calls edges
+    external_calls: Set[str] = set()  # external calls edges
+
+    all_contracts = set()
+
+    for function in functions:
+        if isinstance(function, FunctionContract):
+            all_contracts.add(function.contract_declarer)
+    for function in functions:
+        if isinstance(function, FunctionContract):
+            _process_function(
+                function.contract_declarer,
+                function,
+                contract_functions,
+                contract_calls,
+                solidity_functions,
+                solidity_calls,
+                external_calls,
+                all_contracts,
+            )
+
+    render_internal_calls = ""
+    for contract in all_contracts:
+        render_internal_calls += _render_internal_calls(
+            contract, contract_functions, contract_calls
+        )
+
+    render_solidity_calls = _render_solidity_calls(solidity_functions, solidity_calls)
+
+    render_external_calls = _render_external_calls(external_calls)
+
+    return render_internal_calls + render_solidity_calls + render_external_calls
+
+
+class PrinterCallGraph(AbstractPrinter):
+    ARGUMENT = "call-graph"
+    HELP = "Export the call-graph of the contracts to a dot file"
+
+    WIKI = "https://github.com/trailofbits/slither/wiki/Printer-documentation#call-graph"
+
+    def output(self, filename: str) -> Output:
+        """
+        Output the graph in filename
+        Args:
+            filename(string)
+        """
+
+        all_contracts_filename = ""
+        if not filename.endswith(".dot"):
+            if filename in ("", "."):
+                filename = ""
+            else:
+                filename += "."
+            all_contracts_filename = f"{filename}all_contracts.call-graph.dot"
+
+        if filename == ".dot":
+            all_contracts_filename = "all_contracts.dot"
+
+        info = ""
+        results = []
+        with open(all_contracts_filename, "w", encoding="utf8") as f:
+            info += f"Call Graph: {all_contracts_filename}\n"
+
+            # Avoid duplicate functions due to different compilation unit
+            all_functionss = [
+                compilation_unit.functions for compilation_unit in self.slither.compilation_units
+            ]
+            all_functions = [item for sublist in all_functionss for item in sublist]
+            all_functions_as_dict = {
+                function.canonical_name: function for function in all_functions
+            }
+            content = "\n".join(
+                ["strict digraph {"]
+                + [_process_functions(list(all_functions_as_dict.values()))]
+                + ["}"]
+            )
+            f.write(content)
+            results.append((all_contracts_filename, content))
+
+        for derived_contract in self.slither.contracts_derived:
+            derived_output_filename = f"{filename}{derived_contract.name}.call-graph.dot"
+            with open(derived_output_filename, "w", encoding="utf8") as f:
+                info += f"Call Graph: {derived_output_filename}\n"
+                content = "\n".join(
+                    ["strict digraph {"] + [_process_functions(derived_contract.functions)] + ["}"]
+                )
+                f.write(content)
+                results.append((derived_output_filename, content))
+
+        self.info(info)
+        res = self.generate_output(info)
+        for filename_result, content in results:
+            res.add_file(filename_result, content)
