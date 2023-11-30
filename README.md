@@ -11,11 +11,11 @@ To run the custom call_graph.py and dead_code.py :
 4. To run call-graph printer : slither contract.sol --print call-graph
    dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png //run the dot command on the dot file generated to get the graph as a png.
 
-Bug fix overview:
+Bug fix overview
 
-=================== 
+=============================== 
 Bug 1265:
-===================
+===============================
 
 On further inspection of the bug it is evident that the dead-code detector is falsely adding internal function calls that are being used later on in its report. This porject hopes to understand what the issue is and come up with a better logic to filter out the truly unused function calls.
 
