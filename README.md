@@ -10,12 +10,14 @@ To run the custom call_graph.py and dead_code.py :
 3. To run dead-code detector : slither contract.sol --dead-code
 4. To run call-graph printer : slither contract.sol --print call-graph
    dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png //run the dot command on the dot file generated to get the graph as a png.
-
+   
+*******************************
 Bug fix overview
+*******************************
 
-=============================== 
+******************************* 
 Bug 1265:
-===============================
+*******************************
 
 On further inspection of the bug it is evident that the dead-code detector is falsely adding internal function calls that are being used later on in its report. This porject hopes to understand what the issue is and come up with a better logic to filter out the truly unused function calls.
 
@@ -181,9 +183,11 @@ Code snippet containg the change in dead-code.py :
         if(len(results)==0):
              print("No unused functions detected by dead-code detector")
         return results
-===============================
+
+		
+*******************************
 Bug 664:
-===============================
+*******************************
 Initially the printer was ubnable to differentiate between overloaded functions and so we made changes to the _def_process and _function_node functions where we created id's for the functions using a combination of their names and paramters. 
 
 # return unique id for contract function to use as node name
