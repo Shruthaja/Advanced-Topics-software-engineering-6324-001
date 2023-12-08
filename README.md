@@ -8,7 +8,7 @@ To run the custom call_graph.py and dead_code.py :
 1. Place the files in ~/.local/lib/python3.10/site-packages/slither/printers/call/call_graph.py for call-graph and Place for dead-code as follows -> ~/.local/lib/python3.10/site-packages/slither/detectors/functions/dead_code.py
 2. once they are placed the custom file and their logic will take over for analysing the certificates.
 3. To run dead-code detector : slither contract.sol --dead-code
-4. To run call-graph printer : slither contract.sol --print call-graph
+4. To run call-graph printer : slither contract.sol --print call-graph \n
    dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png //run the dot command on the dot file generated to get the graph as a png.
    
 *******************************
