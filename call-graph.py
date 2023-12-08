@@ -20,19 +20,17 @@ def _contract_subgraph(contract: Contract) -> str:
     return f"cluster_{contract.id}_{contract.name}"
 
 
-# return unique id for contract function to use as node name
 def _function_node(contract: Contract, function: Union[Function, Variable]) -> str:
     parameters_hash = hashlib.sha256("_".join(param.name for param in function.parameters).encode()).hexdigest()
     return f"{contract.id}_{function.name}_{parameters_hash}"
 
 
 
-# return unique id for solidity function to use as node name
+
 def _solidity_function_node(solidity_function: SolidityFunction) -> str:
     return f"{solidity_function.name}"
 
 
-# return dot language string to add graph edge
 def _edge(from_node: str, to_node: str) -> str:
     return f'"{from_node}" -> "{to_node}"'
 
@@ -157,7 +155,7 @@ def _process_function(
     # Extract function parameters
     parameters = [param.name for param in function.parameters]
 
-    # Add the node with function name and parameters
+    #We now add node with function name and parameters
     function_identifier = f"{function.name}({', '.join(parameters)})"
     node = _node(_function_node(contract, function), function_identifier)
     # print(node)
