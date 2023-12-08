@@ -20,17 +20,19 @@ def _contract_subgraph(contract: Contract) -> str:
     return f"cluster_{contract.id}_{contract.name}"
 
 
+# return unique id for contract function to use as node name
 def _function_node(contract: Contract, function: Union[Function, Variable]) -> str:
     parameters_hash = hashlib.sha256("_".join(param.name for param in function.parameters).encode()).hexdigest()
     return f"{contract.id}_{function.name}_{parameters_hash}"
 
 
 
-
+# return unique id for solidity function to use as node name
 def _solidity_function_node(solidity_function: SolidityFunction) -> str:
     return f"{solidity_function.name}"
 
 
+# return dot language string to add graph edge
 def _edge(from_node: str, to_node: str) -> str:
     return f'"{from_node}" -> "{to_node}"'
 
@@ -152,13 +154,13 @@ def _process_function(
     external_calls: Set[str],
     all_contracts: Set[Contract],
 ) -> None:
-    # Extract function parameters
-    parameters = [param.name for param in function.parameters]
-
-    #We now add node with function name and parameters
-    function_identifier = f"{function.name}({', '.join(parameters)})"
-    node = _node(_function_node(contract, function), function_identifier)
-    # print(node)
+    
+    # Extract function parameters with names and also the data types
+    parameters = [(param.name, param.type) for param in function.parameters]
+    # Create function identifier with names and data types
+    function_Identifier = f"{function.name}({', '.join(f'{param_type}:{param_name}' for param_name, param_type in parameters)})"
+    # # Add the node with function name and parameters
+    node = _node(_function_node(contract, function), function_Identifier)
     contract_functions[contract].add(node)
 
     for internal_call in function.internal_calls:
