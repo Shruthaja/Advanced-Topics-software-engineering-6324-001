@@ -10,7 +10,7 @@ To run the custom call_graph.py and dead_code.py :
 3. To run dead-code detector : slither contract.sol --dead-code
 4. To run call-graph printer : slither contract.sol --print call-graph
    
-   dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png //run the dot command on the dot file generated to get the graph as a png.
+   dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png 		//run the dot command on the dot file generated to get the graph as a png.
    
 *******************************
 Bug fix overview
