@@ -5,6 +5,7 @@ This project is concerned with the enhancement of the slither tool . As of this 
 664: The feature (print call-graph) of Slither cannot correctly distinguish functions with the same name (i.e., overload) in a contract https://github.com/crytic/slither/issues/664
 
 To run the custom call_graph.py and dead_code.py :
+
 1. Place the files in ~/.local/lib/python3.10/site-packages/slither/printers/call/call_graph.py for call-graph
 2. Place for dead-code as follows -> ~/.local/lib/python3.10/site-packages/slither/detectors/functions/dead_code.py
 3. Once they are placed the custom file and their logic will take over for analysing the certificates.
