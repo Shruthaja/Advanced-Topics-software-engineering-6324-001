@@ -1,16 +1,28 @@
-# Advanced-software-engineering--6324-001
+# Advanced Software Engineering - 6324-001
 
-This project is concerned with the enhancement of the slither tool . As of this moment we are working on the [Bugs] 
-1265 : Slither incorrectly reports internal library function as unused #1265 (https://github.com/crytic/slither/issues/1265).
-664: The feature (print call-graph) of Slither cannot correctly distinguish functions with the same name (i.e., overload) in a contract https://github.com/crytic/slither/issues/664
+This project focuses on enhancing the Slither tool. Currently, we are working on the following issues:
 
-To run the custom call_graph.py and dead_code.py :
+- **[Bugs #1265](https://github.com/crytic/slither/issues/1265)**: Slither incorrectly reports internal library functions as unused.
+- **[Bugs #664](https://github.com/crytic/slither/issues/664)**: The print call-graph feature of Slither cannot correctly distinguish functions with the same name (i.e., overload) in a contract.
 
-1. Place the files in ~/.local/lib/python3.10/site-packages/slither/printers/call/call_graph.py for call-graph
-2. Place for dead-code as follows -> ~/.local/lib/python3.10/site-packages/slither/detectors/functions/dead_code.py
-3. Once they are placed the custom file and their logic will take over for analysing the certificates.
-4. To run dead-code detector : slither contract.sol --dead-code
+## Running Custom Scripts
+
+To run the custom `call_graph.py` and `dead_code.py` scripts:
+
+1. Place the `call_graph.py` file in:  
+   `~/.local/lib/python3.10/site-packages/slither/printers/call/call_graph.py`
+
+2. Place the `dead_code.py` file in:  
+   `~/.local/lib/python3.10/site-packages/slither/detectors/functions/dead_code.py`
+
+3. Once they are placed, the custom files and their logic will take over for analyzing the contracts.
+
+4. To run the dead-code detector:  
+   ```bash
+   slither contract.sol --dead-code
+
 5. To run call-graph printer : slither contract.sol --print call-graph
+
 6. Run the dot command on the dot file generated to get the graph as a png :- 	dot -Tpng contract.sol.all_contracts.call-graph.dot  -o demo_graph.png
 
   
@@ -36,12 +48,14 @@ BridgeGovernanceParameters.getNewDepositTxMaxFee(BridgeGovernanceParameters.Depo
 BridgeGovernanceParameters.getNewFraudChallengeDefeatTimeout(BridgeGovernanceParameters.FraudData) (contracts/bridge/BridgeGovernanceParameters.sol#1596-1602) is never used and should be removed
 BridgeGovernanceParameters.getNewFraudChallengeDepositAmount(BridgeGovernanceParameters.FraudData) (contracts/bridge/BridgeGovernanceParameters.sol#1549-1555) is never used and should be removed
 BridgeGovernanceParameters.getNewFraudNotifierRewardMultiplier(BridgeGovernanceParameters.FraudData) (contracts/bridge/BridgeGovernanceParameters.sol#1688-1694) is never used and should be removed
-BridgeGovernanceParameters.getNewFraudSlashingAmount(BridgeGovernanceParameters.FraudData) (contracts/bridge/BridgeGovernanceParameters.sol#1640-1646) is never used and should be removed.........
+BridgeGovernanceParameters.getNewFraudSlashingAmount(BridgeGovernanceParameters.FraudData) (contracts/bridge/BridgeGovernanceParameters.sol#1640-1646) is never used and should be removed
 
-Of this, on examining for example the first line itself we can see that the function "beginRedemptionTimeoutNotifierRewardMultiplierUpdate" is actually being used in line 649 of "tbtc-v2/solidity/contracts/bridge/BridgeGovernance.sol"
 
-True positive :
+For example, upon examining the first line, we see that the function beginRedemptionTimeoutNotifierRewardMultiplierUpdate is actually being used in line 649 of tbtc-v2/solidity/contracts/bridge/BridgeGovernance.sol.
 
+True Positives
+solidity
+Copy code
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
@@ -53,16 +67,16 @@ contract ExampleContract {
     }
 
     function set(address _newOwner) internal {
-        owner = _newOwner;
-       
+        owner = _newOwner;   
     }
 
     function get() public view returns (address) {
         return owner;
     }
 }
-// This is an example of where the dead-code detector is indeed working fine. 
-// This is also an internal function however unlike in the other contracts it is truly never used.
+
+// This is an example where the dead-code detector is indeed working correctly.
+// This is an internal function that is truly never used.
 
 // Internal library
 library L {
@@ -71,39 +85,33 @@ library L {
     }
 }
 
-contract testforpositive {
+contract TestForPositive {
     function test(uint x, uint y) public view returns (uint) {
         // Call the internal library function
         return L.add(x, y);
     }
 }
 
+// This is an example where the dead-code detector is indeed working correctly.
+// This is an internal function that is used. The detector is reporting this correctly.
+Output
 
-// This is an example of where the dead-code detector is indeed working fine. 
-// This is also an internal function which is used. The detector is reporting this correctly.
-
-
-output : 
-
-INFO:Detectors:
+INFO: Detectors:
 ExampleContract.set(address) (tbtc-v2/solidity/contracts/test.sol#11-14) is never used and should be removed
 Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
 
-************************************************************************************************************************************************************************************************************************************************************************
-11/06/2023:
-************************************************************************************************************************************************************************************************************************************************************************
+# Updates (11/06/2023)
 
-After taking further look at the issue we were able to find that the internal functions were being flagged by the dead-code detector at the contract they were being defined in. After adding internal functions to the defer list on the detector the unneccesary flags are no longer appearing.
+After further examination, we discovered that the internal functions were being flagged by the dead-code detector in the contracts where they were defined. By adding internal functions to the defer list in the detector, unnecessary flags are no longer appearing.
 
-The internal functions can always be imported later on and static analysis has no way of knowing if they will be reused again. Private functions however atleast need to be used in the contract they are defined in :
+Internal functions can always be imported later, and static analysis has no way of knowing if they will be reused. However, private functions should at least be used in the contracts they are defined in:
 
 example -
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-//1
-
+// 1
 contract ExampleContract {
     address public owner;
     uint public data;
@@ -113,18 +121,19 @@ contract ExampleContract {
     }
 
     function set(address _newOwner) internal {
-        owner = _newOwner;
-       
+        owner = _newOwner;   
     }
 
     function get() public view returns (address) {
         return owner;
     }
-     function anotherUnusedFunction() public {
+
+    function anotherUnusedFunction() public {
         // This function is also never called
         data = 0;
     }
 }
+
 
 output : 
 6324-001' running
@@ -160,41 +169,39 @@ INFO:Detectors:
 SimpleContract.anotherUnusedFunction() (test.sol#48-51) is never used and should be removed
 Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
 
-
-Code snippet containg the change in dead-code.py :
-
-
+# Code snippet containg the changes in dead-code.py :
+```python
  for function in sorted(self.compilation_unit.functions, key=lambda x: x.canonical_name):
-            if (
-                function.visibility in ["public", "external","internal"]
-                or function.is_constructor
-                or function.is_fallback
-                or function.is_constructor_variables
-            ):
-                continue
-            if function.canonical_name in functions_used:
-                continue
-            if isinstance(function, FunctionContract) and (
-                function.contract_declarer.is_from_dependency()
-            ):
-                continue
-            # Continue if the functon is not implemented because it means the contract is abstract
-            if not function.is_implemented:
-                continue
-            info: DETECTOR_INFO = [function, " is never used and should be removed\n"]
-            res = self.generate_result(info)
-            results.append(res)
-        if(len(results)==0):
-             print("No unused functions detected by dead-code detector")
-        return results
-
-		
+    if (
+        function.visibility in ["public", "external", "internal"]
+        or function.is_constructor
+        or function.is_fallback
+        or function.is_constructor_variables
+    ):
+        continue
+    if function.canonical_name in functions_used:
+        continue
+    if isinstance(function, FunctionContract) and (
+        function.contract_declarer.is_from_dependency()
+    ):
+        continue
+    # Continue if the function is not implemented because it means the contract is abstract
+    if not function.is_implemented:
+        continue
+    info: DETECTOR_INFO = [function, " is never used and should be removed\n"]
+    res = self.generate_result(info)
+    results.append(res)
+if len(results) == 0:
+    print("No unused functions detected by dead-code detector")
+return results
+```		
 *******************************
 Bug 664:
 *******************************
 Initially the printer was ubnable to differentiate between overloaded functions and so we made changes to the _def_process and _function_node functions where we created id's for the functions using a combination of their names and paramters. 
 
 # return unique id for contract function to use as node name
+```Python
 def _function_node(contract: Contract, function: Union[Function, Variable]) -> str:
     parameters_hash = hashlib.sha256("_".join(param.name for param in function.parameters).encode()).hexdigest()
     return f"{contract.id}_{function.name}_{parameters_hash}"
@@ -340,3 +347,6 @@ class PrinterCallGraph(AbstractPrinter):
         res = self.generate_output(info)
         for filename_result, content in results:
             res.add_file(filename_result, content)
+```
+Output -
+After successfully running the test cases, the changes worked, allowing the printer to identify overloaded functions correctly.
